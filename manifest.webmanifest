@@ -1,0 +1,1 @@
+{"name": "POST \u2014 The PC Build Card Game", "short_name": "POST", "start_url": "./", "display": "standalone", "background_color": "#12151c", "theme_color": "#12151c", "icons": [{"src": "img/icon-192.png", "sizes": "192x192", "type": "image/png"}, {"src": "img/icon-512.png", "sizes": "512x512", "type": "image/png"}]}
