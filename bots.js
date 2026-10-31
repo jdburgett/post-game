@@ -71,9 +71,11 @@ function cardValue(p, c, phase) {
 function pickSetup(G, p) {
   const human = p.profile === 'human', rng = G.rng;
   const N = G.decks.comp.length;
+  const anyLegal = p.dealt.specs.some(sid => p.dealt.boards.some(b => E.boardMeets(sid, b)));
   let best = null, bv = -1e9;
   for (const sid of p.dealt.specs) for (const b of p.dealt.boards) {
     const ok = E.boardMeets(sid, b);
+    if (anyLegal && !ok) continue;
     let Ex = 0;
     for (const slot of E.required(b)) {
       const n = G.decks.comp.filter(c => E.halvesOf(c).some(h => h.slot === slot) && fitsAlone(b, c)).length;
@@ -158,9 +160,12 @@ function* botTurn(G) {
       yield { type: 'install', card: pick.c };
     }
   }
+  function* attachAdapters() {
+    for (const c of p.hand.slice()) if (c.kind === 'adp') { const r = E.install(G, c.id); if (r.ok) yield { type: 'install', card: c }; }
+  }
   function* p2Plays() {
     while (t.plays > 0) {
-      for (const c of p.hand.slice()) if (c.kind === 'adp') { const r = E.install(G, c.id); if (r.ok) yield { type: 'install', card: c }; }
+      yield* attachAdapters();
       const acts = [];
       for (const c of p.hand) {
         for (const tk of p.tasks) if (tk.kind === 'ticket' && E.onlineBelieved(p)) { const pts = E.solves(c, tk); if (pts) acts.push({ v: pts, kind: 'ticket', c, tk }); }
@@ -174,6 +179,7 @@ function* botTurn(G) {
       if (pick.kind === 'ticket') { const r = E.closeTicket(G, pick.c.id, pick.tk.id); if (!r.ok) break; yield { type: 'ticket', card: pick.c, ticket: pick.tk }; }
       else { const r = E.install(G, pick.c.id); if (!r.ok) break; yield { type: 'install', card: pick.c }; }
     }
+    yield* attachAdapters();
   }
   const junkOf = () => p.hand.filter(c => cardValue(p, c, phase) <= 0.05).slice(0, 3);
 
