@@ -1,4 +1,4 @@
-import subprocess, re, json, sys
+import subprocess, re, json
 PDF = "/mnt/user-data/uploads/65586476-POST_Cards_v0.5_duplex.pdf"
 W, H = 198, 342
 X0 = (612 - 3*W) / 2

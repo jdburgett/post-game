@@ -10,6 +10,11 @@ It is plain static files — no server code, no accounts. Works in any modern br
 - `data.js` / `data.json` — card data parsed from POST_Cards_v0.5_duplex.pdf; `img/` — card images cropped from that PDF
 - `tools/` — the scripts that rebuilt the data and images from the PDF (extract.py, parse_cards*.py, gen_data.py, crop_cards.py, build.py)
 
+## Development
+The game itself needs no install or build. Node 22+ is only needed for the checks:
+`npm ci`, then `npm test` and `npm run lint`. `ruff check tools` lints the Python scripts.
+GitHub Actions runs all three on every pull request and on pushes to `main`.
+
 ## Rebuilding after card changes
 New card PDF -> run tools in order: extract.py, parse_cards.py, parse_cards2.py, gen_data.py, crop_cards.py, build.py
 (paths inside are for the original workspace; edit them). Rule changes live in engine.js (SPEC, TASK_NEEDS, TICKETS tables).
