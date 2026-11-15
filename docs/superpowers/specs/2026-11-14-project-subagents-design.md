@@ -1,6 +1,6 @@
 # Project subagents: design
 
-**Status:** approved in conversation, 2026-11-14. Spec review pending.
+**Status:** approved 2026-11-14.
 
 ## Goal
 
