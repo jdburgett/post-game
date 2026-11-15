@@ -23,6 +23,19 @@ test('unknown options are rejected', () => {
   assert.throws(() => P.parseArgs(['--opponent', 'robot']), /--opponent/);
 });
 
+test('the counts add up', () => {
+  const st = P.run({ games: 20 });
+  assert.equal(st.seats, 2 * st.games);
+  assert.equal(st.p1Rounds.length, st.games);
+  for (const k of Object.keys(st.held)) assert.ok((st.stuck[k] || 0) <= st.held[k], k);
+});
+
+test('bad option values are rejected, whether from the command line or from run()', () => {
+  assert.throws(() => P.parseArgs(['--games', '2.5']), /whole number/);
+  assert.throws(() => P.run({ games: 3, opponent: 'robot' }), /--opponent/);
+  assert.throws(() => P.parseArgs(['--audit', 'off', '--learner-error', '0.5']), /no effect/);
+});
+
 test('the command line prints a report', () => {
   const out = execFileSync(process.execPath, [path.join(__dirname, '..', 'tools', 'playtest.js'), '--games', '5'], { encoding: 'utf8' });
   assert.match(out, /5 games/);

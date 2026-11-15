@@ -14,8 +14,19 @@ const SEED0 = 100000;   // fixed seeds, so the same options always give the same
 const PROFILE = { apprentice: 'human', expert: 'perfect' };
 const DEFAULT_MISTAKE = 0.10;
 
+const DEFAULTS = { games: 1000, opponent: 'apprentice', audit: 'named', learnerError: null };
+
+function check(o) {
+  if (!PROFILE[o.opponent]) throw new Error('--opponent must be apprentice or expert');
+  if (!['named', 'hidden', 'off'].includes(o.audit)) throw new Error('--audit must be named, hidden or off');
+  if (!Number.isInteger(o.games) || o.games < 1) throw new Error('--games must be a positive whole number');
+  if (o.learnerError !== null && !(o.learnerError >= 0 && o.learnerError <= 1)) throw new Error('--learner-error must be between 0 and 1');
+  if (o.audit === 'off' && o.learnerError !== null) throw new Error('--learner-error has no effect with --audit off (the bots never misplace parts there)');
+  return o;
+}
+
 function parseArgs(argv) {
-  const o = { games: 1000, opponent: 'apprentice', audit: 'named', learnerError: null };
+  const o = { ...DEFAULTS };
   for (let i = 0; i < argv.length; i += 2) {
     const k = argv[i], v = argv[i + 1];
     if (k === '--games') o.games = Number(v);
@@ -24,11 +35,7 @@ function parseArgs(argv) {
     else if (k === '--learner-error') o.learnerError = Number(v);
     else throw new Error(`Unknown option ${k}`);
   }
-  if (!PROFILE[o.opponent]) throw new Error('--opponent must be apprentice or expert');
-  if (!['named', 'hidden', 'off'].includes(o.audit)) throw new Error('--audit must be named, hidden or off');
-  if (!(o.games > 0)) throw new Error('--games must be a positive number');
-  if (o.learnerError !== null && !(o.learnerError >= 0 && o.learnerError <= 1)) throw new Error('--learner-error must be between 0 and 1');
-  return o;
+  return check(o);
 }
 
 const kindOf = c => (c.kind === 'fix' ? 'Fix cards' : c.kind === 'prebuilt' ? 'Refurb Prebuilts' : c.deck === 'comp' ? 'Components' : 'Other add-ons');
@@ -55,11 +62,12 @@ function playGame(seed, o, st) {
     }
     for (const c of [...a.keys()]) if (!p.hand.includes(c)) a.delete(c);
   }
+  if (!G.result) throw new Error(`game ${seed} did not finish`);
   return G;
 }
 
 function run(opts) {
-  const o = Object.assign(parseArgs([]), opts);
+  const o = check(Object.assign({ ...DEFAULTS }, opts));
   const st = { opts: o, games: 0, p1Rounds: [], capHit: 0, ties: 0, firstWins: 0, bonusGames: 0, bonusWins: 0, laterN: 0, laterWins: 0,
     seats: 0, neverPost: 0, spec: {}, recycles: 0, failedCalls: 0, tickets: 0, tasks: 0, seat0FailedCalls: 0, held: {}, stuck: {} };
   for (let i = 0; i < o.games; i++) {
@@ -83,7 +91,7 @@ function run(opts) {
       st.tasks += mine.filter(l => /completed "/.test(l.text)).length;
       const failed = G.log.filter(l => isFailedCall(l, p.seat)).length;
       st.failedCalls += failed;
-      if (p.seat === 0) st.seat0FailedCalls += failed / o.games;
+      if (p.seat === 0) st.seat0FailedCalls += failed;
     }
   }
   return st;
@@ -110,7 +118,7 @@ function format(st) {
   }
   lines.push('', 'Per player per game');
   lines.push(`  Recycles ${per(st.recycles, st.seats)}, failed POST calls ${per(st.failedCalls, st.seats)}, tickets closed ${per(st.tickets, st.seats)}, tasks claimed ${per(st.tasks, st.seats)}.`);
-  if (o.learnerError !== null) lines.push(`  Seat 0 failed POST calls: ${st.seat0FailedCalls.toFixed(2)} per game.`);
+  if (o.learnerError !== null) lines.push(`  Seat 0 failed POST calls: ${(st.seat0FailedCalls / st.games).toFixed(2)} per game.`);
   lines.push('', 'Cards stuck in hand (share of times a card sat in a hand for 3+ turns)');
   lines.push('  ' + Object.keys(st.held).sort().map(k => `${k} ${pct(st.stuck[k] || 0, st.held[k])}`).join(' · '));
   return lines.join('\n');
