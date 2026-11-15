@@ -2,6 +2,20 @@
 
 **Status:** approved 2026-11-14.
 
+## Changes after approval
+
+Reviews during implementation changed these details. Where this list and the text below disagree, this list wins.
+
+- **Intentional design is narrower than written below.** Only the human player, in Phase 1, with the audit `named` or `hidden`, can install a Component that doesn't fit. Learning mode, all of Phase 2 and Add-on cards refuse misfits (see `CLAUDE.md`).
+- **The playtest's opponent rate is fixed.** The opponent keeps a fixed 10% misplace rate as an Apprentice, and never misplaces as Expert. `--learner-error` is rejected with `--audit off`, where bots never misplace. Options are validated in one place, and a game that never finishes stops the run with exit code 2.
+- **The playtest also prints seat 0's own results.** These are win rate, average score, never-POST rate and failed POST calls per game.
+- **The agents' rules are stricter.** They also never create files in the repo, and never push, open, comment on or merge PRs or issues, even if asked. Each description says "Reports findings only; never edits files." The report format adds a closing line on what wasn't covered.
+- **exam-content uses the objectives PDF for topics and codes only.** It doesn't treat the PDF as a source of technical facts. Technical details are labelled "general knowledge, not in the objectives". It reads card images deck by deck, and checks that `data.json` values match the images.
+- **game-completion runs more of the playtest.** It runs all three audit modes against both opponents, and watches for exit code 2.
+- **ui falls back to reading the code.** It opens `index.html` over `file://`. Without Playwright, it reports tap counts read from code, labelled as not observed.
+- **qa avoids reinstalling and checks the right branch.** It runs `npm ci` only when needed. It diffs against `origin/main`, and doesn't switch branches to check a PR.
+- **Other files changed too.** `.gitignore` also ignores `.claude/worktrees/`, and `eslint.config.mjs` lints `tools/**/*.js` as Node code.
+
 ## Goal
 
 Five Claude Code subagents, each focused on one part of making POST a good teaching game: exam content, game completion, gameplay, UI and QA. Each one investigates and reports. None of them changes the game.

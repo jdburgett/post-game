@@ -1,5 +1,7 @@
 # Project Subagents Implementation Plan
 
+> **Status:** implemented 2026-11-14. Review fixes changed several files after this plan was written, so the shipped files, not the code blocks below, are authoritative.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers-extended-cc:subagent-driven-development (recommended) or superpowers-extended-cc:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Add five report-only Claude Code subagents (exam content, game completion, gameplay, UI and QA), the shared project context they need, and a reusable playtest simulation.
@@ -82,7 +84,7 @@ Without it, the agent still runs, but labels anything it says about the exam as 
 - [ ] **Step 3: Copy the PDF in, and check the ignore rules**
 
 ```bash
-cp /tmp/claude-1000/-home-daniel-post-game/04263f1c-6ca7-4251-9a49-f4a157177254/scratchpad/dl-objectives/f1.pdf reference/CompTIA-A-220-1201-V15-Exam-Objectives-4.0.pdf
+cp <the objectives PDF you downloaded; see reference/README.md> reference/CompTIA-A-220-1201-V15-Exam-Objectives-4.0.pdf
 git check-ignore reference/CompTIA-A-220-1201-V15-Exam-Objectives-4.0.pdf
 git check-ignore reference/README.md; echo "exit=$?"
 pdftotext -l 2 reference/CompTIA-A-220-1201-V15-Exam-Objectives-4.0.pdf - | grep 'Version 4.0'

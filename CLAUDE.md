@@ -30,4 +30,4 @@ POST is a two-player PC-building card game that teaches **CompTIA A+ Core 1 (exa
 
 ## Workflow
 - Use the Superpowers skills for any change: brainstorming before behaviour or rules changes, test-driven development, verification before claiming success, and code review before a PR.
-- The agents in `.claude/agents/` (exam-content, game-completion, gameplay, ui, qa) investigate and report. They never change tracked files.
+- The agents in `.claude/agents/` (exam-content, game-completion, gameplay, ui, qa) investigate and report. They're instructed never to change tracked files (they have no Edit or Write tools, but they do have Bash).

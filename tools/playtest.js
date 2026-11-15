@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /* POST — playability statistics from bot-vs-bot games, using engine.js and bots.js unchanged.
    node tools/playtest.js [--games N] [--opponent apprentice|expert] [--audit named|hidden|off] [--learner-error R]
-   Seat 0 is an Apprentice. --learner-error sets how often seat 0 places a part that doesn't fit (the computer keeps 10%).
+   Seat 0 is an Apprentice. --learner-error sets how often seat 0 places a part that doesn't fit (an Apprentice opponent keeps 10%; Expert never misplaces parts).
    --audit named and hidden play identically for bots; hidden only changes the wording of fault messages a human sees. */
 'use strict';
 const fs = require('node:fs');
