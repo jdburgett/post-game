@@ -43,7 +43,7 @@
     {
       "id": 5,
       "subject": "Task 5: Try each agent once",
-      "status": "pending",
+      "status": "completed",
       "description": "**Goal:** Run each agent once on a small real question, and confirm it reports in the shared format without changing tracked files.\n\n**Files:** none changed\n\n**Acceptance Criteria:**\n- [ ] Each of the five agents returns findings with Finding, Evidence, Who decides and Next step\n- [ ] `git status --short` is empty after all five runs, except for the ignored `reference/` PDF\n- [ ] `exam-content` cites the objectives PDF, not memory\n\n**Verify:** `git status --short` \u2192 no output\n\n```json:metadata\n{\"files\": [], \"verifyCommand\": \"`git status --short` \\u2192 no output\", \"acceptanceCriteria\": [\"Each of the five agents returns findings with Finding, Evidence, Who decides and Next step\", \"`git status --short` is empty after all five runs, except for the ignored `reference/` PDF\", \"`exam-content` cites the objectives PDF, not memory\"]}\n```",
       "blockedBy": [
         0,
@@ -54,5 +54,5 @@
       ]
     }
   ],
-  "lastUpdated": "2026-11-15T03:51:34.479408+00:00"
+  "lastUpdated": "2026-11-15T03:54:36.057994+00:00"
 }
