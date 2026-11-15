@@ -16,6 +16,11 @@ test('the same options give the same result', () => {
 test('a learner who misplaces parts fails more POST calls', () => {
   const careful = P.run({ games: 60, learnerError: 0 }), careless = P.run({ games: 60, learnerError: 0.8 });
   assert.ok(careless.seat0FailedCalls > careful.seat0FailedCalls, `${careless.seat0FailedCalls} vs ${careful.seat0FailedCalls}`);
+  assert.ok(careless.seat0Wins < careful.seat0Wins, `${careless.seat0Wins} vs ${careful.seat0Wins}`);
+});
+
+test('the report always shows the learner\'s own results', () => {
+  assert.match(P.format(P.run({ games: 5 })), /Seat 0 \(the learner\): wins/);
 });
 
 test('unknown options are rejected', () => {
@@ -26,6 +31,7 @@ test('unknown options are rejected', () => {
 test('the counts add up', () => {
   const st = P.run({ games: 20 });
   assert.equal(st.seats, 2 * st.games);
+  assert.ok(st.seat0Wins <= st.games);
   assert.equal(st.p1Rounds.length, st.games);
   for (const k of Object.keys(st.held)) assert.ok((st.stuck[k] || 0) <= st.held[k], k);
 });

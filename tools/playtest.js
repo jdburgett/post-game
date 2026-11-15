@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /* POST — playability statistics from bot-vs-bot games, using engine.js and bots.js unchanged.
    node tools/playtest.js [--games N] [--opponent apprentice|expert] [--audit named|hidden|off] [--learner-error R]
-   Seat 0 is an Apprentice. --learner-error sets how often seat 0 places a part that doesn't fit (the computer keeps 10%). */
+   Seat 0 is an Apprentice. --learner-error sets how often seat 0 places a part that doesn't fit (the computer keeps 10%).
+   --audit named and hidden play identically for bots; hidden only changes the wording of fault messages a human sees. */
 'use strict';
 const fs = require('node:fs');
 const path = require('node:path');
@@ -69,7 +70,7 @@ function playGame(seed, o, st) {
 function run(opts) {
   const o = check(Object.assign({ ...DEFAULTS }, opts));
   const st = { opts: o, games: 0, p1Rounds: [], capHit: 0, ties: 0, firstWins: 0, bonusGames: 0, bonusWins: 0, laterN: 0, laterWins: 0,
-    seats: 0, neverPost: 0, spec: {}, recycles: 0, failedCalls: 0, tickets: 0, tasks: 0, seat0FailedCalls: 0, held: {}, stuck: {} };
+    seats: 0, neverPost: 0, spec: {}, recycles: 0, failedCalls: 0, tickets: 0, tasks: 0, seat0FailedCalls: 0, seat0Wins: 0, seat0Score: 0, seat0Never: 0, held: {}, stuck: {} };
   for (let i = 0; i < o.games; i++) {
     const G = playGame(SEED0 + i, o, st), r = G.result;
     st.games++; st.p1Cap = G.cfg.p1Cap;
@@ -91,7 +92,7 @@ function run(opts) {
       st.tasks += mine.filter(l => /completed "/.test(l.text)).length;
       const failed = G.log.filter(l => isFailedCall(l, p.seat)).length;
       st.failedCalls += failed;
-      if (p.seat === 0) st.seat0FailedCalls += failed;
+      if (p.seat === 0) { st.seat0FailedCalls += failed; st.seat0Wins += won ? 1 : 0; st.seat0Score += r.scores[0].total; if (p.post === null) st.seat0Never++; }
     }
   }
   return st;
@@ -118,7 +119,7 @@ function format(st) {
   }
   lines.push('', 'Per player per game');
   lines.push(`  Recycles ${per(st.recycles, st.seats)}, failed POST calls ${per(st.failedCalls, st.seats)}, tickets closed ${per(st.tickets, st.seats)}, tasks claimed ${per(st.tasks, st.seats)}.`);
-  if (o.learnerError !== null) lines.push(`  Seat 0 failed POST calls: ${(st.seat0FailedCalls / st.games).toFixed(2)} per game.`);
+  lines.push(`  Seat 0 (the learner): wins ${pct(st.seat0Wins, st.games)}, average score ${(st.seat0Score / st.games).toFixed(1)}, never POSTs ${pct(st.seat0Never, st.games)}, failed POST calls ${(st.seat0FailedCalls / st.games).toFixed(2)} per game.`);
   lines.push('', 'Cards stuck in hand (share of times a card sat in a hand for 3+ turns)');
   lines.push('  ' + Object.keys(st.held).sort().map(k => `${k} ${pct(st.stuck[k] || 0, st.held[k])}`).join(' · '));
   return lines.join('\n');
