@@ -6,5 +6,5 @@ export default [
   js.configs.recommended,
   { rules: { 'no-unused-vars': ['error', { varsIgnorePattern: '^_' }] } },
   { files: ['*.js'], languageOptions: { sourceType: 'script', globals: { ...globals.browser, require: 'readonly', module: 'readonly' } } },
-  { files: ['test/**/*.js'], languageOptions: { sourceType: 'commonjs', globals: { ...globals.node, window: 'writable' } } },
+  { files: ['test/**/*.js', 'tools/**/*.js'], languageOptions: { sourceType: 'commonjs', globals: { ...globals.node, window: 'writable' } } },
 ];

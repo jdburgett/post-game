@@ -15,6 +15,12 @@ The game itself needs no install or build. Node 22+ is only needed for the check
 `npm ci`, then `npm test` and `npm run lint`. `ruff check tools` lints the Python scripts.
 GitHub Actions runs all three on every pull request and on pushes to `main`.
 
+## Claude agents
+`.claude/agents/` has five report-only agents for Claude Code. Ask Claude to use one by name:
+`exam-content` (cards against the 220-1201 objectives), `game-completion` (rulebook against code),
+`gameplay` (balance and fun, from simulations), `ui` (phone usability and accessibility) and `qa` (checks and regressions).
+`node tools/playtest.js` prints playability statistics from bot games. Shared context is in `CLAUDE.md`.
+
 ## Rebuilding after card changes
 New card PDF -> run tools in order: extract.py, parse_cards.py, parse_cards2.py, gen_data.py, crop_cards.py, build.py
 (paths inside are for the original workspace; edit them). Rule changes live in engine.js (SPEC, TASK_NEEDS, TICKETS tables).
