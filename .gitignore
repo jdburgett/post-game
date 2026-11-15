@@ -1,3 +1,5 @@
 node_modules/
 __pycache__/
 .claude/worktrees/
+reference/*
+!reference/README.md
