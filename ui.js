@@ -127,7 +127,7 @@ function specBox() {
     <h4>Bonus if you have it at the end</h4>${st.bonus.map(r => `<div class="${r.met ? 'ok' : 'no'}">${r.met ? '✔' : '☐'} ${esc(r.label)} <b>+${r.pts}</b></div>`).join('')}</div></div>`;
 }
 function taskThumb(t) {
-  const p = me(); let bd = '';
+  const p = me(); let bd;
   if (t.kind === 'task') { const s = E.taskStatus(p, t); const n = s.filter(Boolean).length; bd = E.taskMet(p, t) ? '<span class="bd good">✔ ready</span>' : `<span class="bd">${n}/${s.length}</span>`; }
   else bd = '<span class="bd warn">ticket</span>';
   return `<div class="thumb t" data-act="zoom" data-id="${t.id}">${img(t)}${bd}</div>`;
@@ -253,8 +253,8 @@ function renderModal() {
       <button data-act="show-aid">Player aids</button><button data-act="log">Game log</button><a style="text-align:center;padding:.65em 1em;background:var(--panel2);border-radius:10px;color:var(--text);text-decoration:none" href="POST_Rulebook_v0.5.pdf" target="_blank" rel="noopener">Rulebook (PDF)</a>
       <button class="danger" data-act="restart">Abandon game</button><button class="primary" data-act="close-modal">Back to game</button></div></div>`;
   } else if (m.type === 'aids') {
-    const aids = S.aids.filter(a => a.id.startsWith('AID'));
-    h = `<div class="sheet wide"><h3>Player aids</h3><div class="grid g3">${aids.slice(0, 2).concat(aids.filter(a => a.id.includes('RS')).slice(0, 1)).map(a => `<div class="thumb" style="width:auto" data-act="zoom-src" data-src="${a.img}"><img class="cardimg" src="${a.img}" alt="aid"></div>`).join('')}</div>
+    const aids = ['AID-YT', 'AID-RS'].map(id => S.aids.find(a => a.id.startsWith(id)));   // the deck holds 3 copies of each
+    h = `<div class="sheet wide"><h3>Player aids</h3><div class="grid g3">${aids.map(a =>`<div class="thumb" style="width:auto" data-act="zoom-src" data-src="${a.img}"><img class="cardimg" src="${a.img}" alt="aid"></div>`).join('')}</div>
       <div class="btns" style="margin-top:.8rem"><button class="primary" data-act="close-modal">Close</button></div></div>`;
   }
   $modal.innerHTML = h;
@@ -318,18 +318,21 @@ async function proceed() {
   S.busy = true; S.sel = []; render();
   while (!G.over) {
     await phaseBanner();
+    if (S.G !== G) return;   // abandoned while we waited
     const t = E.startTurn(G);
     if (!t) break;
     const p = G.P[t.seat];
     if (p.human) { S.busy = false; render(); window.scrollTo(0, 0); return; }
-    await botTurn(p);
+    await botTurn(G);
+    if (S.G !== G) return;
   }
   S.busy = false; S.screen = 'over'; render(); window.scrollTo(0, 0);
 }
-async function botTurn(p) {
+async function botTurn(G) {
   const delay = S.cfg.speed === 'fast' ? 140 : 700;
   render(); await sleep(delay);
-  const gen = B.botTurn(S.G);
+  if (S.G !== G) return;
+  const gen = B.botTurn(G);
   for (;;) {
     const r = gen.next();
     if (r.done) break;
@@ -339,6 +342,7 @@ async function botTurn(p) {
       if (res.posted) await showMsg(`<div class="big">🖥️ The computer called POST</div><p>You audit its build… <b>no fault</b>. It POSTs!</p>`, 'Continue');
       else await showMsg(`<div class="big">🔍 You audited the computer's POST call</div><p>Fault found: <b>${esc(E.nm(res.fault.part))}</b>.</p>${S.G.cfg.audit === 'hidden' ? '' : `<p>${esc(res.fault.why)}</p>`}<p>It discards that part, misses its POST, and <b>you draw 2 Components</b>.</p>`, 'Continue');
     } else await sleep(delay);
+    if (S.G !== G) return;
   }
   render(); await sleep(delay / 2);
 }
@@ -355,7 +359,7 @@ const ACTS = {
   'pick-board'(el) { S.setup.board = el.dataset.id; render(); },
   'confirm-setup'() { confirmSetup(); },
   opt(el) { const k = el.dataset.k, v = el.value; if (k === 'profile') S.cfg.profile = v; else if (k === 'audit') S.cfg.audit = v; else if (k === 'p2') S.cfg.p2Rounds = +v; else if (k === 'speed') S.cfg.speed = v; render(); },
-  zoom(el, ev) { const id = el.dataset.id; const c = E.byId(id) || S.G.disc.comp.concat(S.G.disc.addon).find(x => x.id === id); if (c) { S.modal = Object.assign({}, S.modal && S.modal.type === 'keep' ? S.modal : {}, { type: 'zoom', card: c, prev: S.modal }); render(); } },
+  zoom(el) { const id = el.dataset.id; const c = E.byId(id) || S.G.disc.comp.concat(S.G.disc.addon).find(x => x.id === id); if (c) { S.modal = Object.assign({}, S.modal && S.modal.type === 'keep' ? S.modal : {}, { type: 'zoom', card: c, prev: S.modal }); render(); } },
   'zoom-src'(el) { S.modal = { type: 'zoom', card: { img: el.dataset.src, name: 'aid' } }; render(); },
   'close-modal'() { const m = S.modal; if (m && m.type === 'zoom' && m.prev) { S.modal = m.prev; render(); } else closeModal(); },
   'modal-ok'() { closeModal(); },

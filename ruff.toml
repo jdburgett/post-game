@@ -1,0 +1,3 @@
+# tools/ uses compact one-liners on purpose, so check for real errors rather than layout.
+[lint]
+select = ["E9", "F"]

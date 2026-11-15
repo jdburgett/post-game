@@ -32,7 +32,8 @@ function stoOk(b, kind) {
 }
 function storageFits(b, ds) {
   const cap = { sata: b.sata, sas: b.sas, m2: b.m2, bay25: b.bay25, msata: b.msata };
-  const opts = { nvme: ['m2'], m2sata: b.m2sata ? ['m2'] : [], msata: ['msata'], sas: ['sas'], sata35: ['sata', 'sas'], sata25: ['sata', 'bay25'] };
+  // SATA is the only port two drive kinds compete for, so it is each kind's last choice
+  const opts = { nvme: ['m2'], m2sata: b.m2sata ? ['m2'] : [], msata: ['msata'], sas: ['sas'], sata35: ['sas', 'sata'], sata25: ['bay25', 'sata'] };
   const order = ds.slice().sort((x, y) => opts[x.kind].length - opts[y.kind].length);
   for (const d of order) {
     let placed = false;
@@ -129,7 +130,6 @@ function powerOk(p) {
 function slotsFilled(p) { return required(p.b).every(s => p.core[s]); }
 
 // ================================================================ add-on rules
-const TOKS = ['VGA', 'DVI', 'HDMI', 'DP', 'USB-C'];
 function slotsFit(b, cards) {
   const cap = Object.assign({}, b.slots);
   const order = { PCI: ['PCI'], x16: ['x16'], x4: ['x4', 'x16'], x1: ['x1', 'x4', 'x16'] };
@@ -193,7 +193,7 @@ function tryInstall(p, c, opts) {
   if (k === 'fix' || k === 'prebuilt') return fail('That card closes Trouble Tickets — it is not installed.');
   if (k === 'comp') {
     const dropKit = () => { if (q.kit) { for (const s of ['ram', 'sto']) if (q.core[s] && q.core[s].kitHalf) delete q.core[s]; olds.push(q.kit); q.kit = null; } };
-    let placedAs = null;
+    let placedAs;
     if (c.slot === 'kit') {
       if (!required(b).includes('ram') || !required(b).includes('sto')) return fail('This board has no RAM or storage slots.');
       if (q.core.ram && q.core.ram.kitHalf) dropKit();
@@ -504,8 +504,8 @@ function applyInstall(G, p, c, r) {
 function install(G, cardId, opts) {
   const t = G.t, p = G.P[t.seat], c = p.hand.find(x => x.id === cardId);
   if (!c) return { ok: false, err: 'Card not in hand.' };
-  if (t.plays <= 0) return { ok: false, err: 'No plays left.' };
   const free = c.kind === 'adp';
+  if (t.plays <= 0 && !free) return { ok: false, err: 'No plays left.' };
   const strictHuman = t.kind === 'p2' || G.cfg.audit === 'off';
   const r = tryInstall(p, c, Object.assign({ lenient: p.human && !strictHuman && c.deck === 'comp' }, opts || {}));
   if (!r.q) return { ok: false, err: r.err };
