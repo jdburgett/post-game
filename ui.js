@@ -81,7 +81,7 @@ function renderTitle() {
 // ---- setup: choose 1 of 3 Spec Sheets and 1 of 3 boards ----
 function renderSetup() {
   const p = me(), d = p.dealt;
-  const row = (items, kind) => `<div class="pick-row" data-scroll="pick-${kind}">${items.map(c => `<div class="pick ${S.setup[kind] === c.id ? 'on' : ''}" data-act="pick-${kind}" data-id="${c.id}">${img(c)}<span class="mag" data-act="zoom" data-id="${c.id}">🔍</span></div>`).join('')}</div>`;
+  const row = (items, kind) => `<div class="pick-row" data-scroll="pick-${kind}">${items.map(c => `<div class="pick ${S.setup[kind] === c.id ? 'on' : ''}" data-act="zoom" data-offer="pick-${kind}" data-id="${c.id}">${img(c)}</div>`).join('')}</div>`;
   const specs = d.specs.map(id => E.byId(id)), boards = d.boards;
   const ok = S.setup.spec && S.setup.board;
   return `<div class="page">
@@ -144,8 +144,8 @@ function oppPanel() {
 }
 function handHtml() {
   const p = me(), G = S.G, selOk = myTurn() && ['play', 'discard'].includes(G.t.step);
-  return `<div class="panel"><h3>Your hand <span class="chip">${p.hand.length}/${G.cfg.handLimit}</span>${selOk ? '<span class="muted small">tap to select</span>' : ''}</h3>
-    <div class="scroller" data-scroll="hand" style="padding-top:.5rem">${p.hand.map(c => `<div class="thumb h ${S.sel.includes(c.id) ? 'sel' : ''}" ${selOk ? `data-act="sel" data-id="${c.id}"` : `data-act="zoom" data-id="${c.id}"`}>${img(c)}<span class="mag" data-act="zoom" data-id="${c.id}">🔍</span></div>`).join('') || '<span class="muted small" style="padding:1rem">Empty hand</span>'}</div></div>`;
+  return `<div class="panel"><h3>Your hand <span class="chip">${p.hand.length}/${G.cfg.handLimit}</span>${selOk ? '<span class="muted small">tap a card to see it</span>' : ''}</h3>
+    <div class="scroller" data-scroll="hand" style="padding-top:.5rem">${p.hand.map(c => `<div class="thumb h ${S.sel.includes(c.id) ? 'sel' : ''}" data-act="zoom" data-id="${c.id}"${selOk ? ' data-offer="sel"' : ''}>${img(c)}</div>`).join('') || '<span class="muted small" style="padding:1rem">Empty hand</span>'}</div></div>`;
 }
 function phaseLabel() {
   const G = S.G;
@@ -230,18 +230,20 @@ function renderModal() {
     if (c.kind === 'task' && S.G && S.G.P[ME].tasks.includes(c)) {
       const st = E.taskStatus(me(), c); extra = `<div class="muted small center" style="margin-top:.5rem">${st.filter(Boolean).length} of ${st.length} needs met${E.taskMet(me(), c) ? ' — ready to claim' : ''}</div>`;
     }
-    h = `<div data-act="close-modal" style="width:100%"><img class="zoomimg" src="${c.img}" alt="${esc(c.name)}">${extra}<p class="muted small center">Tap anywhere to close</p></div>`;
+    const offer = cardOffer(m.offer, c.id);
+    const btns = offer ? `<div class="btns" style="margin-top:.6rem"><button class="primary" data-act="${m.offer}" data-id="${c.id}" ${offer.off ? 'disabled' : ''}>${offer.label}</button><button data-act="close-modal">Close</button></div>` : '<p class="muted small center">Tap anywhere to close</p>';
+    h = `<div data-act="close-modal" style="width:100%"><img class="zoomimg" src="${c.img}" alt="${esc(c.name)}">${extra}${btns}</div>`;
   } else if (m.type === 'msg') {
     h = `<div class="sheet result">${m.html}<div class="btns" style="margin-top:.8rem"><button class="primary" data-act="modal-ok">${m.btn || 'OK'}</button></div></div>`;
   } else if (m.type === 'keep') {
     const t = S.G.t;
     h = `<div class="sheet wide"><h3>Keep 2 of these 3</h3><p class="muted small">The card you don't keep goes face-up on the ${t.deck === 'comp' ? 'Components' : 'Add-ons'} discard pile.</p>
-      <div class="grid g3">${t.look.map(c => `<div class="thumb ${S.keepSel.includes(c.id) ? 'sel' : ''}" style="width:auto" data-act="keep-toggle" data-id="${c.id}">${img(c)}<span class="mag" data-act="zoom" data-id="${c.id}">🔍</span></div>`).join('')}</div>
+      <div class="grid g3">${t.look.map(c => `<div class="thumb ${S.keepSel.includes(c.id) ? 'sel' : ''}" style="width:auto" data-act="zoom" data-offer="keep-toggle" data-id="${c.id}">${img(c)}</div>`).join('')}</div>
       <div class="btns" style="margin-top:.8rem"><button class="primary" data-act="keep-ok" ${S.keepSel.length === Math.min(2, t.look.length) ? '' : 'disabled'}>Keep ${S.keepSel.length}/${Math.min(2, t.look.length)}</button></div></div>`;
   } else if (m.type === 'disc') {
     const pile = S.G.disc[m.deck];
     h = `<div class="sheet wide"><h3>${m.deck === 'comp' ? 'Components' : 'Add-ons'} discard pile (${pile.length})</h3>
-      ${m.pick ? '<p class="muted small">Tap a card to take it.</p>' : ''}<div class="grid">${pile.slice().reverse().map(c => `<div class="thumb" style="width:auto" data-act="${m.pick ? 'take-pick' : 'zoom'}" data-id="${c.id}">${img(c)}</div>`).join('') || '<span class="muted">Empty</span>'}</div>
+      ${m.pick ? '<p class="muted small">Tap a card to see it and take it.</p>' : ''}<div class="grid">${pile.slice().reverse().map(c => `<div class="thumb" style="width:auto" data-act="zoom"${m.pick ? ' data-offer="take-pick"' : ''} data-id="${c.id}">${img(c)}</div>`).join('') || '<span class="muted">Empty</span>'}</div>
       <div class="btns" style="margin-top:.8rem"><button data-act="close-modal">${m.pick ? 'Cancel' : 'Close'}</button></div></div>`;
   } else if (m.type === 'deckpick') {
     h = `<div class="sheet"><h3>Recycle: draw from which deck?</h3><div class="btns"><button class="primary" data-act="recycle-go" data-d="comp">Components</button><button class="primary" data-act="recycle-go" data-d="addon">Add-ons</button></div><div class="btns" style="margin-top:.5rem"><button data-act="close-modal">Cancel</button></div></div>`;
@@ -259,6 +261,16 @@ function renderModal() {
   }
   $modal.innerHTML = h;
 }
+// the choice a tapped card offers under its full-size view (null = just a closer look)
+function cardOffer(offer, id) {
+  if (offer === 'sel') { const on = S.sel.includes(id), dis = S.G.t.step === 'discard'; return { label: on ? (dis ? 'Keep in hand' : 'Unselect') : (dis ? 'Discard this' : 'Select') }; }
+  if (offer === 'keep-toggle') return S.keepSel.includes(id) ? { label: "Don't keep" } : { label: 'Keep', off: S.keepSel.length >= 2 };
+  if (offer === 'pick-spec') return { label: 'Choose this Spec Sheet' };
+  if (offer === 'pick-board') return { label: 'Choose this board' };
+  if (offer === 'take-pick') return { label: 'Take this card' };
+  return null;
+}
+const leaveZoom = () => { if (S.modal && S.modal.type === 'zoom') S.modal = S.modal.prev || null; };
 function showMsg(html, btn) { return new Promise(res => { S.modal = { type: 'msg', html, btn }; S.modalResolve = res; render(); }); }
 function closeModal() { S.modal = null; if (S.modalResolve) { const r = S.modalResolve; S.modalResolve = null; r(); } render(); }
 
@@ -355,21 +367,21 @@ function afterPlays() {
 }
 const ACTS = {
   start() { startGame(); },
-  'pick-spec'(el) { S.setup.spec = el.dataset.id; render(); },
-  'pick-board'(el) { S.setup.board = el.dataset.id; render(); },
+  'pick-spec'(el) { leaveZoom(); S.setup.spec = el.dataset.id; render(); },
+  'pick-board'(el) { leaveZoom(); S.setup.board = el.dataset.id; render(); },
   'confirm-setup'() { confirmSetup(); },
   opt(el) { const k = el.dataset.k, v = el.value; if (k === 'profile') S.cfg.profile = v; else if (k === 'audit') S.cfg.audit = v; else if (k === 'p2') S.cfg.p2Rounds = +v; else if (k === 'speed') S.cfg.speed = v; render(); },
-  zoom(el) { const id = el.dataset.id; const c = E.byId(id) || S.G.disc.comp.concat(S.G.disc.addon).find(x => x.id === id); if (c) { S.modal = Object.assign({}, S.modal && S.modal.type === 'keep' ? S.modal : {}, { type: 'zoom', card: c, prev: S.modal }); render(); } },
+  zoom(el) { const id = el.dataset.id; const c = E.byId(id) || S.G.disc.comp.concat(S.G.disc.addon).find(x => x.id === id); if (c) { S.modal = Object.assign({}, S.modal && S.modal.type === 'keep' ? S.modal : {}, { type: 'zoom', card: c, prev: S.modal, offer: el.dataset.offer }); render(); } },
   'zoom-src'(el) { S.modal = { type: 'zoom', card: { img: el.dataset.src, name: 'aid' } }; render(); },
   'close-modal'() { const m = S.modal; if (m && m.type === 'zoom' && m.prev) { S.modal = m.prev; render(); } else closeModal(); },
   'modal-ok'() { closeModal(); },
-  sel(el) { const id = el.dataset.id, i = S.sel.indexOf(id); if (i >= 0) S.sel.splice(i, 1); else S.sel.push(id); render(); },
+  sel(el) { leaveZoom(); const id = el.dataset.id, i = S.sel.indexOf(id); if (i >= 0) S.sel.splice(i, 1); else S.sel.push(id); render(); },
   'take-open'() { S.modal = { type: 'disc', deck: 'comp', pick: true }; render(); },
   'take-pick'(el) { S.modal = null; E.takeFromDiscard(S.G, el.dataset.id); render(); },
   'take-skip'() { E.skipTake(S.G); render(); },
   deck(el) { E.chooseDeck(S.G, el.dataset.d); render(); },
   draw() { E.drawLook(S.G); S.keepSel = []; if (S.G.t.look.length === 0) { S.G.t.step = 'play'; } else S.modal = { type: 'keep' }; render(); },
-  'keep-toggle'(el) { const id = el.dataset.id, i = S.keepSel.indexOf(id); if (i >= 0) S.keepSel.splice(i, 1); else if (S.keepSel.length < 2) S.keepSel.push(id); render(); },
+  'keep-toggle'(el) { leaveZoom(); const id = el.dataset.id, i = S.keepSel.indexOf(id); if (i >= 0) S.keepSel.splice(i, 1); else if (S.keepSel.length < 2) S.keepSel.push(id); render(); },
   'keep-ok'() { E.keep(S.G, S.keepSel); S.keepSel = []; S.modal = null; S.sel = []; render(); },
   install() {
     const G = S.G, id = S.sel[0]; if (!id) return;
@@ -421,7 +433,7 @@ document.addEventListener('input', ev => { if (ev.target.id === 'seed') S.cfg.se
 
 // tiny extra styles for things created in JS
 const st = document.createElement('style');
-st.textContent = '.mag{position:absolute;left:50%;bottom:3px;transform:translateX(-50%);font-size:.78rem;background:rgba(0,0,0,.72);border-radius:7px;padding:1px 6px;line-height:1.3;z-index:2}.slotph{aspect-ratio:2.75/4.75;border:2px dashed var(--line);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:.68rem;color:var(--dim);text-transform:uppercase;text-align:center}.pick .mag{bottom:6px}';
+st.textContent = '.slotph{aspect-ratio:2.75/4.75;border:2px dashed var(--line);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:.68rem;color:var(--dim);text-transform:uppercase;text-align:center}.pick ';
 document.head.appendChild(st);
 
 window.POSTUI = { S, render, ACTS };
